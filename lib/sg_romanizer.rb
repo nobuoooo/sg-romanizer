@@ -21,7 +21,12 @@ class SgRomanizer
   # @param [Integer] arabic
   # @return [String]
   def romanize(arabic)
-    # write your code here
+    arabic.digits.map.with_index do |n, i|
+      next if n.zero?
+
+      digit = i + 1
+      convert_arabic_to_roman(n, digit)
+    end.compact.reverse.join
   end
 
   def deromanize(roman)
