@@ -1,32 +1,25 @@
 class SgRomanizer
-  ROMAN_STRING_MAP_BY_DIGITS =
+  ROMAN_CHARS_MAP_BY_DIGITS =
     {
-      1 => {
-        min_roman: "I",
-        middle_roman: "V",
-        max_roman: "X"
-      },
-      2 => {
-        min_roman: "X",
-        middle_roman: "L",
-        max_roman: "C"
-      },
-      3 => {
-        min_roman: "C",
-        middle_roman: "D",
-        max_roman: "M"
-      }
+      1 => { min_base_roman: "I", middle_base_roman: "V", max_base_roman: "X" },
+      2 => { min_base_roman: "X", middle_base_roman: "L", max_base_roman: "C" },
+      3 => { min_base_roman: "C", middle_base_roman: "D", max_base_roman: "M" }
     }
+  PAIR_ROMAN_REGEX = /IV|IX|XL|XC|CD|CM/
+  PAIR_ROMAN_TO_ARABIC_MAP =
+    { "IV" => 4, "IX" => 9, "XL" => 40, "XC" => 90, "CD" => 400, "CM" => 900 }
+  SINGLE_ROMAN_TO_ARABIC_MAP =
+    { "I" => 1, "V" => 5, "X" => 10, "L" => 50, "C" => 100, "D" => 500, "M" => 1000 }
 
   # @param [Integer] arabic
   # @return [String]
   def romanize(arabic)
-    arabic.digits.map.with_index do |n, i|
-      next if n.zero?
+    arabic.digits.map.with_index do |num, i|
+      next if num.zero?
 
       digit = i + 1
-      convert_arabic_to_roman(n, digit)
-    end.compact.reverse.join
+      build_arabic_to_roman(num, digit)
+    end.compact.reverse.join # 末尾から計算していたため反転させる
   end
 
   # @param [String] roman
@@ -42,36 +35,49 @@ class SgRomanizer
 
   private
 
-
-  # @param [Integer] arabic
+  # @param [Integer] num
   # @param [Integer] digit
   # @return [String]
-  def convert_arabic_to_roman(arabic, digit)
+  def build_arabic_to_roman(num, digit)
     case digit
     when 1, 2, 3
-      roman_string = ROMAN_STRING_MAP_BY_DIGITS.fetch(digit)
-      min_roman = roman_string[:min_roman]
-      middle_roman = roman_string[:middle_roman]
-      max_roman = roman_string[:max_roman]
-      case arabic
-      when 1, 2, 3
-        min_roman * arabic
-      when 4
-        min_roman + middle_roman
-      when 5, 6, 7, 8
-        middle_roman + (min_roman * (arabic - 5))
-      when 9
-        min_roman + max_roman
-      else
-        raise ArgumentError
-      end
+      convert_arabic_to_roman_up_to_hundreds(num, digit)
     when 4
-      case arabic
-      when 1, 2, 3
-        "M" * arabic
-      else
-        raise ArgumentError
-      end
+      convert_arabic_to_roman_in_thousands(num)
+    else
+      raise ArgumentError
+    end
+  end
+
+  # @param [Integer] num
+  # @param [Integer] digit
+  # @return [String]
+  def convert_arabic_to_roman_up_to_hundreds(num, digit)
+    roman_chars = ROMAN_CHARS_MAP_BY_DIGITS.fetch(digit)
+    # 各桁の基底となるアラビア数字を取得する
+    min_base_roman = roman_chars[:min_base_roman]
+    middle_base_roman = roman_chars[:middle_base_roman]
+    max_base_roman = roman_chars[:max_base_roman]
+    case num
+    when 1, 2, 3
+      min_base_roman * num
+    when 4
+      min_base_roman + middle_base_roman
+    when 5, 6, 7, 8
+      middle_base_roman + (min_base_roman * (num - 5))
+    when 9
+      min_base_roman + max_base_roman
+    else
+      raise ArgumentError
+    end
+  end
+
+  # @param [Integer] num
+  # @return [String]
+  def convert_arabic_to_roman_in_thousands(num)
+    case num
+    when 1, 2, 3
+      "M" * num
     else
       raise ArgumentError
     end
